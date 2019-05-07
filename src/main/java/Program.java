@@ -1,25 +1,25 @@
-import java.util.HashSet;
 import java.util.Scanner;
-import java.util.Set;
+import java.util.regex.Pattern;
 
 public class Program {
+    private static Scanner in = new Scanner(System.in);
     public static void main(String[] args) {
-        Scanner in = new Scanner(System.in);
-
         System.out.println("Введите основание исходной системы счисления");
-        short originNumberSystem = in.nextShort();
-        if(originNumberSystem < 2 || originNumberSystem > 36)
-            throw new IllegalArgumentException("Основание исходной системы счисления должно быть больше 1 и меньше 37");
+        short originNumberSystem = validInputSystem();
 
         System.out.println("Введите основание целевой системы счисления:");
-        short resultNumberSystem = in.nextShort();
-        if(resultNumberSystem < 2 || resultNumberSystem > 36)
-            throw new IllegalArgumentException("Основание целевой системы счисления должно быть больше 1 и меньше 37");
+        short resultNumberSystem = validInputSystem();
 
         System.out.println("Введите число:");
-        String number = in.next();
-        if(!isRightNumber(number, originNumberSystem))
-            throw new IllegalArgumentException("Число невозможно записать в исходной системе счисления.");
+        String number;
+        while (true)
+        {
+            number = in.next().toUpperCase(); //Вызов функции позволяет вводить как в нижнем, так и в верхнем регистре
+            if (isRightNumber(number, originNumberSystem))
+                break;
+            System.out.println("Вы неправильно ввели число.");
+            System.out.println("Убедитесь, что оно правильно записано в исходной системе счисления.");
+        }
 
         ToAnotherNumberSystem operation = new ToAnotherNumberSystem(originNumberSystem, resultNumberSystem, number);
         System.out.println(operation.transfer());
@@ -27,22 +27,35 @@ public class Program {
         in.close();
     }
 
-    private static void fillingWithValidSymbols(Set<Character> validSymbols, short originNumberSystem) {
-        for(int i = 0; i < originNumberSystem; i++)
-            if(i < 10)
-                validSymbols.add((char)(i + '0'));
-            else {
-                char symbol = (char)('A' + i - 10); //Для вычесления кода A, B, C... в таблице юникода
-                validSymbols.add(symbol);
+    private static short validInputSystem()
+    {
+        System.out.println("Оно должно быть от 2 до 36");
+        while(true)
+        {
+            String inputVal = in.next();
+            if(Pattern.matches("[0-9][0-9]?", inputVal)) {
+                short rezValue = Short.parseShort(inputVal);
+                if(rezValue >= 2 && rezValue <= 36)
+                    return rezValue;
             }
+            System.out.println("Вы ввели неверные данные. Попробуйте еще раз.");
+        }
+    }
+
+    private static String makingRegExp(short originNumberSystem)
+    {
+        StringBuilder regExp = new StringBuilder("[");
+        for(int i = 0; i < originNumberSystem; i++)
+            if (i < 10)
+                regExp.append(i);
+            else
+                regExp.append((char) ('A' + i - 10));
+        regExp.append("]+");
+        return regExp.toString();
     }
 
     private static boolean isRightNumber(String number, short originNumberSystem) {
-        Set<Character> validSymbols = new HashSet<Character>();
-        fillingWithValidSymbols(validSymbols, originNumberSystem);
-        for(char num : number.toCharArray())
-            if(!validSymbols.contains(num))
-                return false;
-        return true;
+        String regExp = makingRegExp(originNumberSystem);
+        return Pattern.matches(regExp, number);
     }
 }
